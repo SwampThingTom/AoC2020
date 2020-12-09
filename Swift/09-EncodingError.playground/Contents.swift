@@ -53,23 +53,24 @@ func findInvalidValue(in data: [Int], windowSize: Int) -> Int? {
 }
 
 func findWeaknessRange(in data: [Int], target: Int) -> (lower: Int, upper: Int)? {
-    // Assume the values that sum to the target occur before the target
-    // itself. This isn't guaranteed but seems likely and is true for the
-    // dataset I was given. This optimization greatly reduces the number
-    // of iterations through the inner loop.
+    // Assume the values that sum to the target occur before the target itself.
     guard let targetIndex = data.firstIndex(of: target) else { return nil }
-    for upperIndex in stride(from: targetIndex-1, through: 0, by: -1) {
-        var sum = data[upperIndex]
-        var lowerIndex = upperIndex
-        while sum < target && lowerIndex > 0 {
+    
+    var upperIndex = targetIndex-1
+    var lowerIndex = upperIndex
+    var sum = data[upperIndex]
+    
+    while sum != target && lowerIndex > 0 {
+        if sum > target {
+            sum -= data[upperIndex]
+            upperIndex -= 1
+        } else if sum < target {
             lowerIndex -= 1
             sum += data[lowerIndex]
         }
-        if sum == target {
-            return (lower: lowerIndex, upper: upperIndex)
-        }
     }
-    return nil
+    
+    return sum == target ? (lower: lowerIndex, upper: upperIndex) : nil
 }
 
 func findWeakness(in data: [Int], target: Int) -> Int? {
