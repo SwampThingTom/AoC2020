@@ -7,7 +7,7 @@ import Foundation
 
 func readFile(named name: String) -> [String] {
     let currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    let fileURL = URL(fileURLWithPath: name, relativeTo: currentDirectoryURL)
+    let fileURL = URL(fileURLWithPath: name + ".txt", relativeTo: currentDirectoryURL)
     guard let content = try? String(contentsOf: fileURL, encoding: String.Encoding.utf8) else {
         print("Unable to read input file \(name)")
         print("Current directory: \(currentDirectoryURL)")
@@ -172,7 +172,7 @@ func runWaypoint(_ actions: [(Character, Int)]) -> Location {
     return results.0
 }
 
-let actionStrings = readFile(named: "12-input.txt").filter { $0.count > 0 }
+let actionStrings = readFile(named: "12-input").filter { $0.count > 0 }
 let actions = parse(strings: actionStrings)
 let location = run(actions)
 let distance = abs(location.0) + abs(location.1)
