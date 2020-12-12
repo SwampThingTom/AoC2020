@@ -1,10 +1,12 @@
+#!/usr/bin/swift
+
 // Seating System
 // https://adventofcode.com/2020/day/11
 
 import Foundation
 
 func readFile(named name: String) -> [String] {
-    let currentDirectoryURL = URL(fileURLWithPath: "/Users/tom.aylesworth/Projects/AoC2020/Swift/11-SeatingSystem")
+    let currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     let fileURL = URL(fileURLWithPath: name, relativeTo: currentDirectoryURL)
     guard let content = try? String(contentsOf: fileURL, encoding: String.Encoding.utf8) else {
         print("Unable to read input file \(name)")
