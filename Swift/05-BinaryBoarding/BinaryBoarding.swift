@@ -16,10 +16,6 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockBoardingPasses() -> [String] {
-    return ["BFFFBBFRRR", "FFFBBBFRRR", "BBFFBBFRLL"]
-}
-
 func value(for string: String, lower: Character, upper: Character) -> Int {
     var accumulator = 0
     var regionSize = (pow(2, string.count) as NSDecimalNumber).intValue / 2

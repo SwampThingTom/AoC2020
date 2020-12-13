@@ -16,26 +16,6 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockCustomsDeclarations() -> [String] {
-    return [
-        "abc",
-        "",
-        "a",
-        "b",
-        "c",
-        "",
-        "ab",
-        "ac",
-        "",
-        "a",
-        "a",
-        "a",
-        "a",
-        "",
-        "b"
-    ]
-}
-
 func questionsAnyoneAnswered(declarations: ArraySlice<String>) -> Set<Character> {
     declarations.reduce([]) { (result, declaration) -> Set<Character> in
         result.union(declaration)

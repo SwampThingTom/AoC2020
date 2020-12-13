@@ -16,25 +16,11 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockProgram() -> [String] {
-    return [
-        "nop +0",
-        "acc +1",
-        "jmp +4",
-        "acc +3",
-        "jmp -3",
-        "acc -99",
-        "acc +1",
-        "jmp -4",
-        "acc +6",
-    ]
-}
-
 enum Instruction : CustomStringConvertible {
     case acc(operand: Int)
     case jmp(operand: Int)
     case nop(operand: Int)
-    
+
     var description: String {
         switch self {
         case let .acc(operand):
@@ -45,7 +31,7 @@ enum Instruction : CustomStringConvertible {
             return "nop \(operand)"
         }
     }
-    
+
     var toggleJmpNop: Instruction {
         switch self {
         case .acc:
@@ -56,7 +42,7 @@ enum Instruction : CustomStringConvertible {
             return .jmp(operand: operand)
         }
     }
-    
+
     static func make(instruction: String, operand: Int) -> Instruction? {
         switch instruction {
         case "acc": return .acc(operand: operand)
@@ -84,7 +70,7 @@ func run(_ program: [Instruction]) -> (Int, [Int], Bool) {
     var acc = 0
     var pc = 0
     var executedAddresses = Set<Int>()
-    
+
     repeat {
         executedAddresses.insert(pc)
         switch program[pc] {
@@ -97,14 +83,14 @@ func run(_ program: [Instruction]) -> (Int, [Int], Bool) {
             pc += 1
         }
     } while pc < program.count && !executedAddresses.contains(pc)
-    
+
     let success = pc == program.count
     return (acc, Array(executedAddresses), success)
 }
 
 func repair(program: [Instruction], executedAddresses: [Int]) -> Int? {
     let addressesToTry = jmpAndNopAddresses(program: program, executedAddresses: executedAddresses)
-    
+
     for address in addressesToTry {
         let modifiedProgram = modify(program: program, address: address)
         let (accumulator, _, success) = run(modifiedProgram)
@@ -112,7 +98,7 @@ func repair(program: [Instruction], executedAddresses: [Int]) -> Int? {
             return accumulator
         }
     }
-    
+
     return nil
 }
 

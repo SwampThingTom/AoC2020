@@ -16,24 +16,10 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockBagRules() -> [String] {
-    return [
-        "light red bags contain 1 bright white bag, 2 muted yellow bags.",
-        "dark orange bags contain 3 bright white bags, 4 muted yellow bags.",
-        "bright white bags contain 1 shiny gold bag.",
-        "muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.",
-        "shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.",
-        "dark olive bags contain 3 faded blue bags, 4 dotted black bags.",
-        "vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.",
-        "faded blue bags contain no other bags.",
-        "dotted black bags contain no other bags."
-    ]
-}
-
 func parse(rule: String) -> (String, [(Int, String)])? {
     let ruleComponents = rule.components(separatedBy: " bags contain ")
     guard ruleComponents.count == 2 else { return nil }
-    
+
     let outerBag = ruleComponents[0]
     let allowableBagsComponents = ruleComponents[1].components(separatedBy: ", ")
     let allowableBags = allowableBagsComponents.compactMap { parse(allowableBag: $0) }
@@ -43,7 +29,7 @@ func parse(rule: String) -> (String, [(Int, String)])? {
 func parse(allowableBag: String) -> (Int, String)? {
     let components = allowableBag.components(separatedBy: " ")
     guard components.count == 4 else { return nil }
-    
+
     guard let count = Int(components[0]) else { return nil }
     let bag = components[1] + " " + components[2]
     return (count, bag)
@@ -66,7 +52,7 @@ func bags(from rules: [String : [(Int, String)]], thatCanHold bag: String) -> [S
         let nextBag = bagsToTry.removeFirst()
         guard !triedBags.contains(nextBag) else { continue }
         triedBags.insert(nextBag)
-        
+
         let nextBags = bags(from: rules, thatCanDirectlyHold: nextBag)
         result.formUnion(Set(nextBags))
         bagsToTry.append(contentsOf: nextBags)

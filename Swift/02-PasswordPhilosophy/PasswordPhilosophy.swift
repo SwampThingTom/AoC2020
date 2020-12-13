@@ -22,14 +22,6 @@ extension StringProtocol {
     }
 }
 
-func mockPasswordFile() -> [String] {
-    return [
-        "1-3 a: abcde",
-        "1-3 b: cdefg",
-        "2-9 c: ccccccccc"
-    ]
-}
-
 struct PasswordPolicy {
     let password: String
     let requiredChar: Character

@@ -16,17 +16,6 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockData() -> [String] {
-    return [
-        "F10",
-        "N3",
-        "F7",
-        "R90",
-        "F11",
-        ""
-    ]
-}
-
 // A tuple identifying a grid location as (east, north).
 typealias Location = (Int,Int)
 

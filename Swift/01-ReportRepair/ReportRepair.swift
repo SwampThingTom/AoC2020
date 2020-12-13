@@ -16,10 +16,6 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockExpenses() -> [Int] {
-    return [1721, 979, 366, 299, 675, 1456]
-}
-
 func find2020(expenses: [Int]) -> (Int, Int) {
     for i in 0 ..< expenses.count - 1 {
         for j in i+1 ..< expenses.count {

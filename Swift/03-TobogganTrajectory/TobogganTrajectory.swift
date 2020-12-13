@@ -25,30 +25,14 @@ extension StringProtocol {
 struct Map {
     /// True if a tree is at the given [row][column] location.
     let cells: [[Bool]]
-    
+
     var height: Int { cells.count }
     var width: Int { cells[0].count }
-    
+
     func hasTree(row: Int, column: Int) -> Bool {
         let normalColumn = column % width
         return cells[row][normalColumn]
     }
-}
-
-func mockMap() -> [String] {
-    return [
-        "..##.......",
-        "#...#...#..",
-        ".#....#..#.",
-        "..#.#...#.#",
-        ".#...##..#.",
-        "..#.##.....",
-        ".#.#.#....#",
-        ".#........#",
-        "#.##...#...",
-        "#...##....#",
-        ".#..#...#.#"
-    ]
 }
 
 func parseMap(strings: [String]) -> Map {
@@ -63,7 +47,7 @@ func countTrees(onSlope slope: (right: Int, down: Int), in map: Map) -> Int {
     var count = 0
     var column = slope.right
     var row = slope.down
-    
+
     while row < map.height {
         if map.hasTree(row: row, column: column) {
             count += 1
@@ -71,7 +55,7 @@ func countTrees(onSlope slope: (right: Int, down: Int), in map: Map) -> Int {
         column += slope.right
         row += slope.down
     }
-    
+
     return count
 }
 

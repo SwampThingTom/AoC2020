@@ -16,14 +16,6 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockData() -> [String] {
-    return [
-        "939",
-        "7,13,x,x,59,x,31,19",
-        ""
-    ]
-}
-
 func departure(after time: Int, for busses: [Int]) -> (busID: Int, time: Int) {
     let departureTimes = busses.map { (busID: $0, time: Int(ceil(Double(time) / Double($0))) * $0 ) }
     let earliestDeparture = departureTimes.min() { $0.time < $1.time }
@@ -71,10 +63,6 @@ func moduloInverse(a: Int, m: Int) -> Int {
     return result >= 0 ? result : result + m
 }
 
-func match(time: Int, busses: [(busID: Int, offset: Int)]) -> Bool {
-    return busses.allSatisfy { (time + $0.offset) % $0.busID == 0 }
-}
-
 let scheduleStrings =  readFile(named: "13-input").filter { $0.count > 0 }
 let minDepartTime = Int(scheduleStrings[0])!
 let busIDs = scheduleStrings[1].components(separatedBy: ",").compactMap { Int($0) }
@@ -83,6 +71,5 @@ let busTimesWaitTime = departureBus.busID * (departureBus.time - minDepartTime)
 print("The ID of the bus times the wait time in minutes is \(busTimesWaitTime)")
 
 let busOffsets = busRemainders(scheduleString: scheduleStrings[1])
-print(busOffsets)
 let matchingTime = findMinTime(for: busOffsets)
 print("The earliest time that has each bus leaving at the desired offset is \(matchingTime)")
