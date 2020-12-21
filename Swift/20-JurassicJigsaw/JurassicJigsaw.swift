@@ -5,6 +5,9 @@
 
 import Foundation
 
+// Set to true to render the tile placement as they are added.
+let SHOW_ADDED_TILES = false
+
 func readFile(named name: String) -> [String] {
     let currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     let fileURL = URL(fileURLWithPath: name + ".txt", relativeTo: currentDirectoryURL)
@@ -172,9 +175,7 @@ struct Tile: Hashable {
 
     func matchesEdge(_ value: Int, direction: Direction, orientation: Orientation) -> Bool {
         let edgeReversed = matchingEdge(direction: direction, orientation: orientation)
-        let matches = value == edgeReversed
-        //print("  comparing edge \(value) with \(edgeReversed)")
-        return matches
+        return value == edgeReversed
     }
 
     func orientedEdges(_ orientation: Orientation) -> [Int] {
@@ -302,8 +303,12 @@ struct Puzzle: CustomStringConvertible {
         var newPuzzle = self
         newPuzzle.tiles[nextLocation.0][nextLocation.1] = (tile, orientation)
         newPuzzle.updateNextLocation()
-        //print("Added tile \(tile.tileId)")
-        //print("\(newPuzzle)")
+
+        if SHOW_ADDED_TILES {
+            print("Added tile \(tile.tileId)")
+            print("\(newPuzzle)")
+        }
+
         return newPuzzle
     }
 
@@ -321,7 +326,6 @@ struct Puzzle: CustomStringConvertible {
 
     func doesFit(_ tile: Tile, orientation: Orientation) -> Bool {
         let edges = tile.orientedEdges(orientation)
-        //print("doesFit edges: \(edges)")
         return matchesTileAbove(nextLocation, edge: edges[0]) &&
             matchesTileRight(nextLocation, edge: edges[1]) &&
             matchesTileBelow(nextLocation, edge: edges[2]) &&
@@ -357,9 +361,12 @@ struct Puzzle: CustomStringConvertible {
     }
 }
 
-func parse(_ input: [String]) -> [Tile] {
+func parse(_ input: [String]) -> [Int: Tile] {
     let tileStrings = input.split(separator: "")
-    return tileStrings.map { parse(tile: Array($0)) }
+    return tileStrings.reduce(into: [Int: Tile]()) { result, tileStrings in
+        let tile = parse(tile: Array(tileStrings))
+        result[tile.tileId] = tile
+    }
 }
 
 func parse(tile: [String]) -> Tile {
@@ -386,11 +393,11 @@ typealias EdgeMap = [Int: Set<Int>]
 
 func makeEdgeMap() -> EdgeMap {
     var edges = EdgeMap()
-    for tile in tiles {
+    for (tileId, tile) in tiles {
         tile.edges.enumerated().forEach { flipIndex, edgeRotations in
             edgeRotations.enumerated().forEach { rotationIndex, value in
                 var tileIds = edges[value] ?? Set<Int>()
-                tileIds.insert(tile.tileId)
+                tileIds.insert(tileId)
                 edges[value] = tileIds
             }
         }
@@ -398,30 +405,24 @@ func makeEdgeMap() -> EdgeMap {
     return edges
 }
 
-func solve(_ puzzle: Puzzle, with tiles: [Tile], edges: EdgeMap) -> Puzzle? {
-    guard !tiles.isEmpty else { return puzzle }
+func solve(_ puzzle: Puzzle, with tileIds: Set<Int>, edges: EdgeMap) -> Puzzle? {
+    guard !tileIds.isEmpty else { return puzzle }
 
-    //print("looking for tiles that match \(puzzle.nextMatchingEdge!)")
     guard var tilesToTry = edges[puzzle.nextMatchingEdge!] else {
-        //print("  no more matching edges")
         return nil
     }
-    //print("found: \(tilesToTry)")
 
     while !tilesToTry.isEmpty {
         let tileId = tilesToTry.removeFirst()
-        guard let tile = tiles.first(where: { $0.tileId == tileId }) else { 
-            //print("  tile has already been used")
-            continue
-        }
-        //print("trying \(tile.tileId)")
+        guard tileIds.contains(tileId) else { continue }
 
+        let tile = tiles[tileId]!
         for orientation in allOrientations {
             guard puzzle.doesFit(tile, orientation: orientation) else {
                 continue
             }
             let newPuzzle = puzzle.puzzleByAdding(tile, orientation: orientation)
-            let remainingTiles = tiles.filter { $0.tileId != tile.tileId }
+            let remainingTiles = tileIds.subtracting([tileId])
             if let solution = solve(newPuzzle, with: remainingTiles, edges: edges) {
                 return solution
             }
@@ -431,16 +432,16 @@ func solve(_ puzzle: Puzzle, with tiles: [Tile], edges: EdgeMap) -> Puzzle? {
     return nil
 }
 
-func solve(_ puzzle: Puzzle, with tiles: [Tile]) -> Puzzle? {
+func solve(_ puzzle: Puzzle, with tileIds: Set<Int>) -> Puzzle? {
     guard !tiles.isEmpty else { return puzzle }
-    var tilesToTry = Set(tiles)
+    var tilesToTry = tileIds
     repeat {
-        let tile = tilesToTry.removeFirst()
+        let tileId = tilesToTry.removeFirst()
+        let tile = tiles[tileId]!
         let edges = makeEdgeMap()
         for orientation in allOrientations {
-            //print("trying first tile: \(tile.tileId) with \(orientation)")
             let newPuzzle = puzzle.puzzleByAdding(tile, orientation: orientation)
-            let remainingTiles = tiles.filter { $0.tileId != tile.tileId }
+            let remainingTiles = tileIds.subtracting([tileId])
             if let solution = solve(newPuzzle, with: remainingTiles, edges: edges) {
                 return solution
             }
@@ -453,7 +454,7 @@ let input = readFile(named: "20-input")
 //let input = mockData()
 let tiles = parse(input)
 
-let solution = solve(Puzzle(size: tiles.count), with: tiles)
+let solution = solve(Puzzle(size: tiles.count), with: Set(tiles.keys))
 print("Part 1 solution:")
 print(solution ?? "  womp-womp")
 
