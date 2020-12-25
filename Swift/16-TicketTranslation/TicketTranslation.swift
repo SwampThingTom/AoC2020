@@ -16,22 +16,6 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockFile2() -> [String] {
-    return [
-        "class: 0-1 or 4-19",
-        "row: 0-5 or 8-19",
-        "seat: 0-13 or 16-19",
-        "",
-        "your ticket:",
-        "11,12,13",
-        "",
-        "nearby tickets:",
-        "3,9,18",
-        "15,1,5",
-        "5,14,19",
-    ]
-}
-
 typealias RulesMap = [String: Set<Int>]
 
 func parse(_ input: [String]) -> (RulesMap, [Int], [[Int]]) {
@@ -86,43 +70,39 @@ func isValid(forTicket ticket: [Int], rules: RulesMap) -> Bool {
     }
 }
 
-// TODO: Finish part 2.
-// Original implementation looped over every position to find rules that matched.
-// Becaase it didn't accouont for the possibility of multiple rules matching, it
-// failed (and returned different "matches" for each run).
-//
-// New implementations loops over rules trying to find the column(s) that matches.
-// It assumes that there will be some set of rules that match only a single column.
-//
-// Currently ends up in an infinite loop.
+// For each rule, find a single position that matches.
 func findRulePositions(rules: RulesMap, validTickets: [[Int]]) -> [(Int, String)] {
     var results = [(Int, String)]()
-    var rulesFound = Set<String>()
-    while rulesFound.count < rules.count {
-        for rule in rules {
-            guard !rulesFound.contains(rule.0) else { continue }
-            if let position = findMatchingPosition(for: rule.1, in: validTickets) {
-                results.append((position, rule.0))
-                rulesFound.insert(rule.0)
-                //print("Position \(position) = \(rule)")
+    var remainingRules = Set<String>(rules.keys)
+    var remainingPositions = Set<Int>(0 ..< validTickets[0].count)
+    while remainingRules.count > 0 {
+        for ruleKey in remainingRules {
+            let rule = rules[ruleKey]!
+            if let position = findMatchingPosition(for: rule,
+                                                   in: validTickets,
+                                                   remainingPositions: remainingPositions) {
+                results.append((position, ruleKey))
+                remainingRules.remove(ruleKey)
+                remainingPositions.remove(position)
             }
         }
     }
     return results
 }
 
-func findMatchingPosition(for validValues: Set<Int>, in tickets: [[Int]]) -> Int? {
-    var matches = [Int]()
-    for position in 0 ..< tickets[0].count {
+func findMatchingPosition(for validValues: Set<Int>, in tickets: [[Int]], remainingPositions: Set<Int>) -> Int? {
+    var result: Int?
+    for position in remainingPositions {
         let match = tickets.allSatisfy { validValues.contains($0[position]) }
         if match {
-            matches.append(position)
+            // Fail fast if we find more than a single matching position.
+            guard result == nil else { return nil }
+            result = position
         }
     }
-    return matches.count == 1 ? matches[0] : nil
+    return result
 }
 
-//let input = mockFile2()
 let input = readFile(named: "16-input")
 let (rules, myTicket, otherTickets) = parse(input)
 
@@ -133,7 +113,5 @@ print("The sum of the invalid ticket values is \(invalidSum)")
 let validTickets = otherTickets.filter { isValid(forTicket: $0, rules: rules) }
 let rulePositions = findRulePositions(rules: rules, validTickets: validTickets)
 let departureRulePositions = rulePositions.filter { $0.1.hasPrefix("departure") }
-print(departureRulePositions)
-print(myTicket)
-let departureProducts = departureRulePositions.reduce(1.0) { $0 * Double(myTicket[$1.0]) }
+let departureProducts = departureRulePositions.reduce(1) { $0 * myTicket[$1.0] }
 print("Thhe product of the departure fields is \(departureProducts)")
