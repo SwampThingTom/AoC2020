@@ -16,23 +16,6 @@ func readFile(named name: String) -> [String] {
     return content.components(separatedBy: .newlines)
 }
 
-func mockData() -> [String] {
-    return [
-        "0: 4 1 5",
-        "1: 2 3 | 3 2",
-        "2: 4 4 | 5 5",
-        "3: 4 5 | 5 4",
-        "4: \"a\"",
-        "5: \"b\"",
-        "",
-        "ababbb",
-        "bababa",
-        "abbbab",
-        "aaabbb",
-        "aaaabbb",
-    ]
-}
-
 extension StringProtocol {
     subscript(offset: Int) -> Character {
         self[index(startIndex, offsetBy: offset)]
@@ -115,55 +98,43 @@ func print(_ rules: Rules) {
     }
 }
 
-func joinLiterals(partialRules: [PartialRule]) -> PartialRule? {
-    var joinedLiteralValues = ""
-    for partialRule in partialRules {
-        guard let literalValue = partialRule.literalValue else { return nil }
-        joinedLiteralValues.append(literalValue)
-    }
-    return .literal(joinedLiteralValues)
-}
+func doesMatch(_ message: Substring, partialRules: [PartialRule], from rules: Rules) -> Bool {
+    guard !message.isEmpty else { return partialRules.isEmpty }
+    guard let partialRule = partialRules.first else { return false }
+    guard message.count >= partialRules.count else { return false }
 
-func joinLiterals(partialRulesList: [[PartialRule]]) -> [[PartialRule]] {
-    return partialRulesList.map {
-        guard let joinedLiterals = joinLiterals(partialRules: $0) else {
-            return $0
-        }
-        return [joinedLiterals]
-    }
-}
-
-func permutations(of partialRules: [PartialRule], prefix: [PartialRule], from rules: Rules) -> [[PartialRule]] {
-    guard let partialRule = partialRules.first else { return [prefix] }
-    guard let ruleIndex = partialRule.ruleIndex else {
-        // Replacement is a literal so simply replace it.
-        let newPrefix = prefix + [partialRule]
-        return permutations(of: Array(partialRules.dropFirst()), prefix: newPrefix, from: rules)
+    if let literal = partialRule.literalValue {
+        guard literal == String(message.first!) else { return false }
+        return doesMatch(message.dropFirst(), partialRules: Array(partialRules.dropFirst()), from: rules)
     }
 
+    let ruleIndex = partialRule.ruleIndex!
     let replacementRules = rules[ruleIndex]!
-    if replacementRules.count == 1 {
-        // Replacement is a single list of rules so replace the single rule with the list and recurse.
-        let newPartialRules = replacementRules[0] + partialRules.dropFirst()
-        return permutations(of: Array(newPartialRules), prefix: prefix, from: rules)
+    let match = replacementRules.contains {
+        let newPartialRules = $0.map { $0 } + partialRules.dropFirst()
+        return doesMatch(message, partialRules: newPartialRules, from: rules)
     }
-
-    var thePermutations = [[PartialRule]]()
-    for replacementPartialRules in replacementRules {
-        // Replacement is a list of subrules so create the permutations and recurse.
-        let newPartialRules = replacementPartialRules.map { $0 } + partialRules.dropFirst()
-        thePermutations.append(Array(newPartialRules))
-    }
-    return Array(thePermutations.map { permutations(of: $0, prefix: prefix, from: rules) }.joined())
+    return match
 }
 
-//let input = mockData()
+func doesMatch(_ message: String, ruleIndex: Int, from rules: Rules) -> Bool {
+    guard let rule = rules[ruleIndex]?[0] else { return false }
+    return doesMatch(Substring(message), partialRules: rule, from: rules)
+}
+
+func updatedRulesForPart2(_ rules: Rules) -> Rules {
+    var updatedRules = rules
+    updatedRules[8] = [[.rule(42)], [.rule(42), .rule(8)]]
+    updatedRules[11] = [[.rule(42), .rule(31)], [.rule(42), .rule(11), .rule(31)]]
+    return updatedRules
+}
+
 let input = readFile(named: "19-input")
 let (rules, messages) = parse(input)
 
-let rule0 = permutations(of: rules[0]![0], prefix: [], from: rules)
-let rule0Joined = joinLiterals(partialRulesList: rule0)
-let rule0Strings = Set(rule0Joined.compactMap { $0.first?.literalValue } )
+let matches = messages.filter { doesMatch($0, ruleIndex: 0, from: rules) }
+print("\(matches.count) messages completely match rule 0")
 
-let matches = messages.filter { rule0Strings.contains($0) }.count
-print("\(matches) messages completely match rule 0")
+let updatedRules = updatedRulesForPart2(rules)
+let updatedMatches = messages.filter { doesMatch($0, ruleIndex: 0, from: updatedRules) }
+print("After updating the rules, \(updatedMatches.count) messages completely match rule 0")
